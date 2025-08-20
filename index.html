@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🛕 TTD Darshan Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- DataTables -->
+  <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+
+  <!-- Flatpickr -->
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet" />
+
+
+
+
+  <style>
+    body { 
+      background: linear-gradient(135deg, #fff6e5, #fde2e2);
+      font-family: "Segoe UI", sans-serif;
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+
+    .page-title { font-weight:800; color:#b82e00; }
+    .card.kpi {
+  border: none;
+  border-radius: 1rem;
+  padding: 1.2rem;
+  color: white;
+  background: linear-gradient(135deg, #ff9933, #ff6600);
+  box-shadow: 0 6px 16px rgba(0,0,0,.2);
+  text-align: center;   /* Center align */
+}
+
+.card.kpi h5 {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.kpi-capsule {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50px;
+  padding: 0.3rem 0.9rem;
+  margin: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.kpi-capsule span {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+    
+    .table-wrap, .fc {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,.1);
+      padding: 1rem;
+      animation: fadeInUp 1s ease;
+    }
+    @keyframes fadeInUp {
+      from {transform: translateY(20px); opacity:0;}
+      to {transform: translateY(0); opacity:1;}
+    }
+
+    
+    /* Compact Calendar */
+    #calendar, #calendarNext {
+      background: #fcf0be;
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,.1);
+    }
+    .fc-daygrid-day-number {
+      display: flex !important;
+      justify-content: center;
+      align-items: center;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      color: #130d0d;
+      font-weight: bold;
+      margin: auto;
+      font-size: 25px;
+    }
+    .fc-event {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      background: #c6f5b7;
+      border: none !important;
+      font-size: 15px;
+      margin-top: 10px;font-weight: bold;
+    }
+    .fc-event .darshan-count { color:#b82e00; font-weight:1000; }
+    .fc-event .member-count { color:#006600; font-weight:1000; }
+    
+  #upcomingTable th {
+    background: linear-gradient(135deg, #ffcc66, #ff9933);
+    color: #4a2c00;
+    font-weight: 700;
+  }
+  #upcomingTable td {
+    background: #fff9e6;
+    font-weight: 600;
+  }
+  #upcomingTable td .letters {
+    color: #b82e00;
+    font-size: 14px;
+    display: block;
+  }
+  #upcomingTable td .members {
+    color: #006600;
+    font-size: 14px;
+    display: block;
+  }
+  #upcomingTable tr:nth-child(even) td {
+    background: #fff3d9;
+  }
+</style>
+ 
+</head>
+<body>
+  <div class="container-fluid py-4">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <h1 class="page-title h3 m-0">🛕 TTD Darshan Dashboard</h1>
+      <span class="ms-auto text-secondary small" id="lastUpdated"></span>
+    </div>
+
+    <!-- Filters -->
+    <div class="card filter-card p-3 mb-4">
+           <div class="row g-3">
+        <div class="col-12 col-md-3">
+          <label class="form-label">🙏 Type of Darshan</label>
+          <select id="fType" class="form-select"><option value="">All</option></select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label">📜 Letter From</label><input id="fLetterFrom" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">📜 Letter To</label><input id="fLetterTo" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">📅 Darshan From</label><input id="fDarshanFrom" class="form-control" /></div>
+        <div class="col-6 col-md-2"><label class="form-label">📅 Darshan To</label><input id="fDarshanTo" class="form-control" /></div>
+        <div class="col-12 text-end"><button id="btnClear" class="btn btn-warning">🔄 Clear</button></div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+<div class="row g-4 mb-4 text-center">
+  <!-- Total Darshans -->
+  <div class="col-12 col-md-4">
+    <div class="card kpi text-white" style="background:linear-gradient(135deg,#a53c07,#6e0709);">
+      <h5>🌟 Total Darshans</h5>
+      <div>
+        <div class="kpi-capsule">📜 Letters Issued<span id="kpiTotalLetters">0</span></div>
+        <div class="kpi-capsule">👥 Pilgrims Count<span id="kpiTotalMembers">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed -->
+  <div class="col-12 col-md-4">
+    <div class="card kpi text-white" style="background:linear-gradient(135deg,#123602,#0f1b01);">
+      <h5>✅ Completed Darshans</h5>
+      <div>
+        <div class="kpi-capsule">📜 Letters Issued<span id="kpiCompletedLetters">0</span></div>
+        <div class="kpi-capsule">👥 Piligrims Benefited <span id="kpiCompletedMembers">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming -->
+  <div class="col-12 col-md-4">
+    <div class="card kpi text-white" style="background:linear-gradient(135deg,#014044,#021133);">
+      <h5>📅 Upcoming Darshans</h5>
+      <div>
+        <div class="kpi-capsule">📜 Letters <span id="kpiUpcomingLetters">0</span></div>
+        <div class="kpi-capsule">👥 Piligrims to be Benefited <span id="kpiUpcomingMembers">0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Two Calendars -->
+<h5 class="mb-3">🗓️ Darshan Calendars</h5>
+<div class="row g-4 mb-4">
+  <div class="col-md-6"><div id="calendar"></div></div>
+  <div class="col-md-6"><div id="calendarNext"></div></div>
+</div>
+<!-- Upcoming Darshans Summary Table -->
+<div class="card p-3 mb-4">
+  <h5 class="mb-3 text-danger fw-bold">🙏 Upcoming Darshans Summary</h5>
+  <div class="table-responsive">
+    <table id="upcomingTable" class="table table-bordered text-center align-middle">
+      <thead class="table-warning">
+        <tr id="upcomingHead">
+          <th>📅 Date</th>
+          <!-- Dynamic Type of Darshan headers will be added here -->
+        </tr>
+      </thead>
+      <tbody id="upcomingBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Chart -->
+<div class="card p-3 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>📊 Darshan Trends</h5>
+    <div>
+      <select id="chartDateType" class="form-select d-inline-block w-auto">
+        <option value="letter">Letter Date</option>
+        <option value="darshan">Darshan Date</option>
+      </select>
+      <select id="chartValueType" class="form-select d-inline-block w-auto">
+        <option value="letters">No. of Letters</option>
+        <option value="members">No. of Members</option>
+      </select>
+    </div>
+  </div>
+  <canvas id="darshanChart" height="120"></canvas>
+</div>
+    
+    <!-- Table -->
+    <div class="table-wrap mb-4 mt-4">
+      <h5>📋 Records</h5>
+      <table id="dataTable" class="table table-striped table-hover" style="width:100%">
+        <thead class="table-light">
+          <tr>
+            <th>S.NO</th><th>🙏 Name</th><th>👥 Members</th><th>📞 Mobile</th><th>🆔 Aadhar</th>
+            <th>📜 Letter</th><th>📅 Darshan</th><th>🔔 Type</th><th>🏨 Accommodation</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="dayModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header bg-warning"><h5 class="modal-title">📅 Darshans on <span id="modalDate"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row mb-2"><div class="col"><span class="badge bg-primary" id="modalCount"></span></div><div class="col"><span class="badge bg-success" id="modalMembers"></span></div></div>
+        <table class="table table-sm">
+          <thead><tr><th>Name</th><th>Members</th><th>Mobile</th><th>Type</th><th>Letter Issued on</th></tr></thead>
+          <tbody id="modalBody"></tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- JS -->
+    <!-- JS -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- ✅ Add this -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+  <script>
+  const DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9Q_BeJKNwcrJk-hMSG9jyxUz8u06gPo2iFfpAzr_d0nQ7zwqdqigjuxmBsyx2J_rFramRcijXC92T/pub?output=csv";
+  let raw=[], filtered=[], dt, calendar, calendarNext;
+
+  const modalDate=document.getElementById("modalDate"),
+        modalCount=document.getElementById("modalCount"),
+        modalMembers=document.getElementById("modalMembers");
+
+  function parseDate(v){if(!v)return null;let d=new Date(v);return isNaN(d)?null:d;}
+  function fmtDate(d){return d?d.toISOString().slice(0,10):"";}
+
+  function applyFilters(){
+    const t=fType.value, lf=parseDate(fLetterFrom.value), lt=parseDate(fLetterTo.value), df=parseDate(fDarshanFrom.value), dtm=parseDate(fDarshanTo.value);
+    filtered=raw.filter(r=>{
+      if(t&&r.type!==t)return false;
+      if(lf&&r.dateLetter<lf)return false;
+      if(lt&&r.dateLetter>lt)return false;
+      if(df&&r.dateDarshan<df)return false;
+      if(dtm&&r.dateDarshan>dtm)return false;
+      return true;
+    });
+    updateKPIs();updateTable();updateCalendars();updateChart();updateUpcomingTable();
+
+
+  }
+  
+  function updateTable(){ if(dt) dt.clear().rows.add(filtered).draw(); }
+
+  function buildEvents(){
+    let counts={};
+    filtered.forEach(r=>{
+      if(r.dateDarshan){
+        let d=fmtDate(r.dateDarshan);
+        if(!counts[d]) counts[d]={darshans:0,members:0,records:[]};
+        counts[d].darshans++;
+        counts[d].members+=r.members;
+        counts[d].records.push(r);
+      }
+    });
+    return Object.keys(counts).map(d=>({start:d,extendedProps:counts[d]}));
+  }
+
+  function updateCalendars(){
+    let ev=buildEvents();
+    calendar.removeAllEvents();calendar.addEventSource(ev);
+    calendarNext.removeAllEvents();calendarNext.addEventSource(ev);
+  }
+let chart;
+
+function updateKPIs(){
+  const today=new Date();today.setHours(0,0,0,0);
+
+  const totalDarshans = filtered.length;
+  const totalLetters = filtered.filter(r=>r.dateLetter).length;
+  const totalMembers = filtered.reduce((a,b)=>a+b.members,0);
+
+  const completed = filtered.filter(r=>r.dateDarshan && r.dateDarshan<today);
+  const upcoming = filtered.filter(r=>r.dateDarshan && r.dateDarshan>=today);
+
+  // Total
+ 
+  document.getElementById("kpiTotalLetters").textContent=totalDarshans;
+  document.getElementById("kpiTotalMembers").textContent=totalMembers;
+
+  // Completed
+
+  document.getElementById("kpiCompletedLetters").textContent=completed.length;
+  document.getElementById("kpiCompletedMembers").textContent=completed.reduce((a,b)=>a+b.members,0);
+
+  // Upcoming
+ 
+  document.getElementById("kpiUpcomingLetters").textContent=upcoming.length;
+  document.getElementById("kpiUpcomingMembers").textContent=upcoming.reduce((a,b)=>a+b.members,0);
+}
+
+function updateChart(){
+  const dateType = document.getElementById("chartDateType").value;
+  const valueType = document.getElementById("chartValueType").value;
+
+  let counts={};
+  filtered.forEach(r=>{
+    let d=null;
+    if(dateType==="letter" && r.dateLetter) d=fmtDate(r.dateLetter);
+    if(dateType==="darshan" && r.dateDarshan) d=fmtDate(r.dateDarshan);
+    if(!d) return;
+    if(!counts[d]) counts[d]={letters:0,members:0};
+    counts[d].letters++;
+    counts[d].members+=r.members;
+  });
+
+  const labels=Object.keys(counts).sort();
+  const data=labels.map(d=>counts[d][valueType]);
+
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById("darshanChart"),{
+    type:"bar",
+    data:{labels,datasets:[{label:valueType, data, borderRadius:8}]},
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:"Date"}},y:{title:{display:true,text:valueType}}}
+    }
+  });
+}
+function updateUpcomingTable(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  
+  // Collect only upcoming records
+  const upcoming = filtered.filter(r => r.dateDarshan && r.dateDarshan >= today);
+
+  // Find all unique Darshan types
+  const types = [...new Set(upcoming.map(r=>r.type).filter(Boolean))].sort();
+
+  // Prepare counts
+  let summary = {};
+  upcoming.forEach(r=>{
+    const d = fmtDate(r.dateDarshan);
+    if(!summary[d]) summary[d] = {};
+    if(!summary[d][r.type]) summary[d][r.type] = {letters:0, members:0};
+    summary[d][r.type].letters++;
+    summary[d][r.type].members += r.members;
+  });
+
+  // Build table head
+  const headRow = document.getElementById("upcomingHead");
+  headRow.innerHTML = "<th>📅 Date</th>";
+  types.forEach(t=>{
+    headRow.innerHTML += `<th>${t}</th>`;
+  });
+
+  // Build body
+  const body = document.getElementById("upcomingBody");
+  body.innerHTML = "";
+  Object.keys(summary).sort().forEach(date=>{
+    let row = `<tr><td><strong>${date}</strong></td>`;
+    types.forEach(t=>{
+      let cell = summary[date][t];
+      if(cell){
+        row += `<td>
+          <span class="letters text-danger" style="cursor:pointer;" 
+                onclick="showUpcomingDetails('${date}','${t}')">📜 ${cell.letters}</span>
+          <span class="members text-success" style="cursor:pointer;" 
+                onclick="showUpcomingDetails('${date}','${t}')">👥 ${cell.members}</span>
+        </td>`;
+      } else {
+        row += `<td>-</td>`;
+      }
+    });
+    row += "</tr>";
+    body.innerHTML += row;
+  });
+}
+function showUpcomingDetails(date, type){
+  // Get matching records
+  const records = filtered.filter(r => fmtDate(r.dateDarshan) === date && r.type === type);
+
+  // Update modal content
+  modalDate.textContent = `${date} (${type})`;
+  modalCount.textContent = records.length + " Darshans";
+  modalMembers.textContent = records.reduce((a,b)=>a+b.members,0) + " Members";
+
+  const mb = document.getElementById("modalBody");
+  mb.innerHTML = "";
+  records.forEach(r=>{
+    mb.innerHTML += `<tr>
+                       <td>${r.name}</td>
+                       <td>${r.members}</td>
+                       <td>${r.mobile}</td>
+                       <td>${r.type}</td>
+                       <td>${r.dateLetterStr}</td>
+                     </tr>`;
+  });
+
+  // Show modal
+  new bootstrap.Modal(document.getElementById("dayModal")).show();
+}
+
+  function makeCalendar(el, initDate){
+    return new FullCalendar.Calendar(el,{
+      initialView:"dayGridMonth",
+      initialDate:initDate,
+      dayCellContent:(arg)=>{return {html:`<div class="fc-daygrid-day-number">${arg.date.getDate()}</div>`};},
+      eventContent:(arg)=>{
+        let data=arg.event.extendedProps;
+        return {html:`<div><div class="darshan-count">📜 ${data.darshans}</div><div class="member-count">👥 ${data.members}</div></div>`};
+      },
+      eventClick:function(info){
+        let data=info.event.extendedProps;
+        modalDate.textContent=fmtDate(info.event.start);
+        modalCount.textContent=data.darshans+" Darshans";
+        modalMembers.textContent=data.members+" Members";
+        let mb=document.getElementById("modalBody");
+        mb.innerHTML="";
+        data.records.forEach(r=>{
+          mb.innerHTML+=`<tr><td>${r.name}</td><td>${r.members}</td><td>${r.mobile}</td><td>${r.type}</td><td>${r.dateLetterStr}</td></tr>`;
+        });
+        new bootstrap.Modal(document.getElementById("dayModal")).show();
+      },
+      windowResize:function(){
+        if(window.innerWidth<768){this.changeView("listMonth");}
+        else{this.changeView("dayGridMonth");}
+      }
+    });
+  }
+
+  function init(){
+    Papa.parse(DATA_URL,{download:true,header:true,complete:function(res){
+      raw=res.data.map(r=>({
+        sno:r["S.NO"],name:r["Name"],members:+r["Members"]||0,mobile:r["Mobile No"],aadhar:r["Aadhar No"],
+        dateLetter:parseDate(r["Date of Letter"]),dateLetterStr:r["Date of Letter"],
+        dateDarshan:parseDate(r["Date of Darshan"]),dateDarshanStr:r["Date of Darshan"],
+        type:r["Type of Darshan"],accom:r["Details of Accommodation"]
+      }));
+      [...new Set(raw.map(r=>r.type).filter(Boolean))].sort().forEach(t=>{
+        let o=document.createElement("option");o.value=t;o.textContent=t;fType.appendChild(o);
+      });
+      flatpickr("#fLetterFrom",{dateFormat:"Y-m-d"});
+      flatpickr("#fLetterTo",{dateFormat:"Y-m-d"});
+      flatpickr("#fDarshanFrom",{dateFormat:"Y-m-d"});
+      flatpickr("#fDarshanTo",{dateFormat:"Y-m-d"});
+      dt=$("#dataTable").DataTable({
+        data:raw,
+        columns:[{data:"sno"},{data:"name"},{data:"members"},{data:"mobile"},{data:"aadhar"},{data:"dateLetterStr"},{data:"dateDarshanStr"},{data:"type"},{data:"accom"}],
+        dom:"Bfrtip",buttons:["excel","pdf","print"]
+      });
+
+      const today=new Date();
+      calendar=makeCalendar(document.getElementById("calendar"),today);
+      const nextMonth=new Date(today.getFullYear(),today.getMonth()+1,1);
+      calendarNext=makeCalendar(document.getElementById("calendarNext"),nextMonth);
+
+      calendar.render();calendarNext.render();
+      btnClear.onclick=()=>{["fType","fLetterFrom","fLetterTo","fDarshanFrom","fDarshanTo"].forEach(id=>document.getElementById(id).value="");applyFilters();};
+      applyFilters();lastUpdated.textContent="Updated "+new Date().toLocaleString();
+    }});
+    ["fType","fLetterFrom","fLetterTo","fDarshanFrom","fDarshanTo"].forEach(id=>document.getElementById(id).addEventListener("change",applyFilters));
+  }
+  init();
+
+  document.getElementById("chartDateType").addEventListener("change",updateChart);
+document.getElementById("chartValueType").addEventListener("change",updateChart);
+  </script>
+</body>
+</html>
