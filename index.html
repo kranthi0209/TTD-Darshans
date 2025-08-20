@@ -284,31 +284,58 @@
         modalCount=document.getElementById("modalCount"),
         modalMembers=document.getElementById("modalMembers");
 
-  function parseDate(v){if(!v)return null;let d=new Date(v);return isNaN(d)?null:d;}
-  function fmtDate(d){return d?d.toISOString().slice(0,10):"";}
+  // --- Date Helpers ---
+  function toLocalDateOnly(d){
+    if(!d) return null;
+    if(!(d instanceof Date)) d = new Date(d);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  function parseDate(v){
+    if(!v) return null;
+    let d = new Date(v);
+    if(isNaN(d)) return null;
+    return toLocalDateOnly(d);
+  }
+  function fmtDate(d){
+    if(!d) return "";
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const yyyy = d.getFullYear();
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
   function applyFilters(){
-    const t=fType.value, lf=parseDate(fLetterFrom.value), lt=parseDate(fLetterTo.value), df=parseDate(fDarshanFrom.value), dtm=parseDate(fDarshanTo.value);
+    const t=fType.value, 
+          lf=parseDate(fLetterFrom.value), 
+          lt=parseDate(fLetterTo.value), 
+          df=parseDate(fDarshanFrom.value), 
+          dtm=parseDate(fDarshanTo.value);
+
     filtered=raw.filter(r=>{
-      if(t&&r.type!==t)return false;
-      if(lf&&r.dateLetter<lf)return false;
-      if(lt&&r.dateLetter>lt)return false;
-      if(df&&r.dateDarshan<df)return false;
-      if(dtm&&r.dateDarshan>dtm)return false;
+      if(t && r.type!==t) return false;
+      if(lf && r.dateLetter<lf) return false;
+      if(lt && r.dateLetter>lt) return false;
+      if(df && r.dateDarshan<df) return false;
+      if(dtm && r.dateDarshan>dtm) return false;
       return true;
     });
-    updateKPIs();updateTable();updateCalendars();updateChart();updateUpcomingTable();
 
-
+    updateKPIs();
+    updateTable();
+    updateCalendars();
+    updateChart();
+    updateUpcomingTable();
   }
   
-  function updateTable(){ if(dt) dt.clear().rows.add(filtered).draw(); }
+  function updateTable(){ 
+    if(dt) dt.clear().rows.add(filtered).draw(); 
+  }
 
   function buildEvents(){
     let counts={};
     filtered.forEach(r=>{
       if(r.dateDarshan){
-        let d=fmtDate(r.dateDarshan);
+        let d=fmtDate(toLocalDateOnly(r.dateDarshan));
         if(!counts[d]) counts[d]={darshans:0,members:0,records:[]};
         counts[d].darshans++;
         counts[d].members+=r.members;
@@ -323,135 +350,134 @@
     calendar.removeAllEvents();calendar.addEventSource(ev);
     calendarNext.removeAllEvents();calendarNext.addEventSource(ev);
   }
-let chart;
 
-function updateKPIs(){
-  const today=new Date();today.setHours(0,0,0,0);
+  let chart;
 
-  const totalDarshans = filtered.length;
-  const totalLetters = filtered.filter(r=>r.dateLetter).length;
-  const totalMembers = filtered.reduce((a,b)=>a+b.members,0);
+  function updateKPIs(){
+    const today=toLocalDateOnly(new Date());
 
-  const completed = filtered.filter(r=>r.dateDarshan && r.dateDarshan<today);
-  const upcoming = filtered.filter(r=>r.dateDarshan && r.dateDarshan>=today);
+    const totalDarshans = filtered.length;
+    const totalMembers = filtered.reduce((a,b)=>a+b.members,0);
 
-  // Total
- 
-  document.getElementById("kpiTotalLetters").textContent=totalDarshans;
-  document.getElementById("kpiTotalMembers").textContent=totalMembers;
+    const completed = filtered.filter(r=>r.dateDarshan && r.dateDarshan<today);
+    const upcoming  = filtered.filter(r=>r.dateDarshan && r.dateDarshan>=today);
 
-  // Completed
+    // Total
+    document.getElementById("kpiTotalLetters").textContent=totalDarshans;
+    document.getElementById("kpiTotalMembers").textContent=totalMembers;
 
-  document.getElementById("kpiCompletedLetters").textContent=completed.length;
-  document.getElementById("kpiCompletedMembers").textContent=completed.reduce((a,b)=>a+b.members,0);
+    // Completed
+    document.getElementById("kpiCompletedLetters").textContent=completed.length;
+    document.getElementById("kpiCompletedMembers").textContent=completed.reduce((a,b)=>a+b.members,0);
 
-  // Upcoming
- 
-  document.getElementById("kpiUpcomingLetters").textContent=upcoming.length;
-  document.getElementById("kpiUpcomingMembers").textContent=upcoming.reduce((a,b)=>a+b.members,0);
-}
+    // Upcoming
+    document.getElementById("kpiUpcomingLetters").textContent=upcoming.length;
+    document.getElementById("kpiUpcomingMembers").textContent=upcoming.reduce((a,b)=>a+b.members,0);
+  }
 
-function updateChart(){
-  const dateType = document.getElementById("chartDateType").value;
-  const valueType = document.getElementById("chartValueType").value;
+  function updateChart(){
+    const dateType = document.getElementById("chartDateType").value;
+    const valueType = document.getElementById("chartValueType").value;
 
-  let counts={};
-  filtered.forEach(r=>{
-    let d=null;
-    if(dateType==="letter" && r.dateLetter) d=fmtDate(r.dateLetter);
-    if(dateType==="darshan" && r.dateDarshan) d=fmtDate(r.dateDarshan);
-    if(!d) return;
-    if(!counts[d]) counts[d]={letters:0,members:0};
-    counts[d].letters++;
-    counts[d].members+=r.members;
-  });
+    let counts={};
+    filtered.forEach(r=>{
+      let d=null;
+      if(dateType==="letter" && r.dateLetter) d=fmtDate(toLocalDateOnly(r.dateLetter));
+      if(dateType==="darshan" && r.dateDarshan) d=fmtDate(toLocalDateOnly(r.dateDarshan));
+      if(!d) return;
+      if(!counts[d]) counts[d]={letters:0,members:0};
+      counts[d].letters++;
+      counts[d].members+=r.members;
+    });
 
-  const labels=Object.keys(counts).sort();
-  const data=labels.map(d=>counts[d][valueType]);
+    const labels=Object.keys(counts).sort();
+    const data=labels.map(d=>counts[d][valueType]);
 
-  if(chart) chart.destroy();
-  chart=new Chart(document.getElementById("darshanChart"),{
-    type:"bar",
-    data:{labels,datasets:[{label:valueType, data, borderRadius:8}]},
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{x:{title:{display:true,text:"Date"}},y:{title:{display:true,text:valueType}}}
-    }
-  });
-}
-function updateUpcomingTable(){
-  const today = new Date(); today.setHours(0,0,0,0);
-  
-  // Collect only upcoming records
-  const upcoming = filtered.filter(r => r.dateDarshan && r.dateDarshan >= today);
-
-  // Find all unique Darshan types
-  const types = [...new Set(upcoming.map(r=>r.type).filter(Boolean))].sort();
-
-  // Prepare counts
-  let summary = {};
-  upcoming.forEach(r=>{
-    const d = fmtDate(r.dateDarshan);
-    if(!summary[d]) summary[d] = {};
-    if(!summary[d][r.type]) summary[d][r.type] = {letters:0, members:0};
-    summary[d][r.type].letters++;
-    summary[d][r.type].members += r.members;
-  });
-
-  // Build table head
-  const headRow = document.getElementById("upcomingHead");
-  headRow.innerHTML = "<th>📅 Date</th>";
-  types.forEach(t=>{
-    headRow.innerHTML += `<th>${t}</th>`;
-  });
-
-  // Build body
-  const body = document.getElementById("upcomingBody");
-  body.innerHTML = "";
-  Object.keys(summary).sort().forEach(date=>{
-    let row = `<tr><td><strong>${date}</strong></td>`;
-    types.forEach(t=>{
-      let cell = summary[date][t];
-      if(cell){
-        row += `<td>
-          <span class="letters text-danger" style="cursor:pointer;" 
-                onclick="showUpcomingDetails('${date}','${t}')">📜 ${cell.letters}</span>
-          <span class="members text-success" style="cursor:pointer;" 
-                onclick="showUpcomingDetails('${date}','${t}')">👥 ${cell.members}</span>
-        </td>`;
-      } else {
-        row += `<td>-</td>`;
+    if(chart) chart.destroy();
+    chart=new Chart(document.getElementById("darshanChart"),{
+      type:"bar",
+      data:{labels,datasets:[{label:valueType, data, borderRadius:8}]},
+      options:{
+        responsive:true,
+        plugins:{legend:{display:false}},
+        scales:{x:{title:{display:true,text:"Date"}},y:{title:{display:true,text:valueType}}}
       }
     });
-    row += "</tr>";
-    body.innerHTML += row;
-  });
-}
-function showUpcomingDetails(date, type){
-  // Get matching records
-  const records = filtered.filter(r => fmtDate(r.dateDarshan) === date && r.type === type);
+  }
 
-  // Update modal content
-  modalDate.textContent = `${date} (${type})`;
-  modalCount.textContent = records.length + " Darshans";
-  modalMembers.textContent = records.reduce((a,b)=>a+b.members,0) + " Members";
+  function updateUpcomingTable(){
+    const today = toLocalDateOnly(new Date());
+  
+    // Collect only upcoming records
+    const upcoming = filtered.filter(r => r.dateDarshan && r.dateDarshan >= today);
 
-  const mb = document.getElementById("modalBody");
-  mb.innerHTML = "";
-  records.forEach(r=>{
-    mb.innerHTML += `<tr>
-                       <td>${r.name}</td>
-                       <td>${r.members}</td>
-                       <td>${r.mobile}</td>
-                       <td>${r.type}</td>
-                       <td>${r.dateLetterStr}</td>
-                     </tr>`;
-  });
+    // Find all unique Darshan types
+    const types = [...new Set(upcoming.map(r=>r.type).filter(Boolean))].sort();
 
-  // Show modal
-  new bootstrap.Modal(document.getElementById("dayModal")).show();
-}
+    // Prepare counts
+    let summary = {};
+    upcoming.forEach(r=>{
+      const d = fmtDate(toLocalDateOnly(r.dateDarshan));
+      if(!summary[d]) summary[d] = {};
+      if(!summary[d][r.type]) summary[d][r.type] = {letters:0, members:0};
+      summary[d][r.type].letters++;
+      summary[d][r.type].members += r.members;
+    });
+
+    // Build table head
+    const headRow = document.getElementById("upcomingHead");
+    headRow.innerHTML = "<th>📅 Date</th>";
+    types.forEach(t=>{
+      headRow.innerHTML += `<th>${t}</th>`;
+    });
+
+    // Build body
+    const body = document.getElementById("upcomingBody");
+    body.innerHTML = "";
+    Object.keys(summary).sort().forEach(date=>{
+      let row = `<tr><td><strong>${date}</strong></td>`;
+      types.forEach(t=>{
+        let cell = summary[date][t];
+        if(cell){
+          row += `<td>
+            <span class="letters text-danger" style="cursor:pointer;" 
+                  onclick="showUpcomingDetails('${date}','${t}')">📜 ${cell.letters}</span>
+            <span class="members text-success" style="cursor:pointer;" 
+                  onclick="showUpcomingDetails('${date}','${t}')">👥 ${cell.members}</span>
+          </td>`;
+        } else {
+          row += `<td>-</td>`;
+        }
+      });
+      row += "</tr>";
+      body.innerHTML += row;
+    });
+  }
+
+  function showUpcomingDetails(date, type){
+    // Get matching records
+    const records = filtered.filter(r => fmtDate(toLocalDateOnly(r.dateDarshan)) === date && r.type === type);
+
+    // Update modal content
+    modalDate.textContent = `${date} (${type})`;
+    modalCount.textContent = records.length + " Darshans";
+    modalMembers.textContent = records.reduce((a,b)=>a+b.members,0) + " Members";
+
+    const mb = document.getElementById("modalBody");
+    mb.innerHTML = "";
+    records.forEach(r=>{
+      mb.innerHTML += `<tr>
+                         <td>${r.name}</td>
+                         <td>${r.members}</td>
+                         <td>${r.mobile}</td>
+                         <td>${r.type}</td>
+                         <td>${r.dateLetterStr}</td>
+                       </tr>`;
+    });
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById("dayModal")).show();
+  }
 
   function makeCalendar(el, initDate){
     return new FullCalendar.Calendar(el,{
@@ -464,7 +490,7 @@ function showUpcomingDetails(date, type){
       },
       eventClick:function(info){
         let data=info.event.extendedProps;
-        modalDate.textContent=fmtDate(info.event.start);
+        modalDate.textContent=fmtDate(toLocalDateOnly(info.event.start));
         modalCount.textContent=data.darshans+" Darshans";
         modalMembers.textContent=data.members+" Members";
         let mb=document.getElementById("modalBody");
@@ -516,7 +542,8 @@ function showUpcomingDetails(date, type){
   init();
 
   document.getElementById("chartDateType").addEventListener("change",updateChart);
-document.getElementById("chartValueType").addEventListener("change",updateChart);
-  </script>
+  document.getElementById("chartValueType").addEventListener("change",updateChart);
+</script>
+
 </body>
 </html>
