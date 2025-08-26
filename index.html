@@ -258,6 +258,19 @@
     </div></div>
   </div>
 
+  <!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-3">
+      <div class="modal-body">
+        <div class="spinner-border text-primary" role="status"></div>
+        <h5 class="mt-3">Fetching Data from CMO - MRC Peshi Database , please wait...</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <!-- JS -->
     <!-- JS -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -306,11 +319,15 @@ function fmtDate(d){
 
 // --- Fetch JSON from Apps Script ---
 async function fetchSheetJSON() {
+  // Show loading modal
+  const loadingModal = new bootstrap.Modal(document.getElementById("loadingModal"), {backdrop:'static',keyboard:false});
+  loadingModal.show();
+
   try {
     const res = await fetch(DATA_URL);
     raw = await res.json();
 
-    // Map into your required structure
+    // Map JSON to your structure
     raw = raw.map(r => ({
       sno: r["S.NO"] || r["S.No"] || r["Sno"],
       name: r["Name"] || "",
@@ -325,11 +342,18 @@ async function fetchSheetJSON() {
       accom: r["Details of Accommodation"] || ""
     }));
 
-    initWidgets(); // Initialize table, calendars, KPIs, charts
+    // Initialize dashboard widgets
+    initWidgets();
+
   } catch(e) {
     console.error("Failed to load sheet JSON:", e);
+    alert("Failed to load data. Check console for details.");
+  } finally {
+    // Hide modal after data is loaded or if fetch fails
+    loadingModal.hide();
   }
 }
+
 
 // --- Filters ---
 function applyFilters(){
